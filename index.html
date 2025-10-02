@@ -5,126 +5,99 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>News Aggregator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .loading {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .news-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .news-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.3);
-        }
-        .category-btn {
-            transition: all 0.3s ease;
-        }
-        .category-btn.active {
-            background: linear-gradient(to right, #3b82f6, #8b5cf6);
-            transform: scale(1.05);
-        }
-    </style>
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 min-h-screen text-white">
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
         <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-5xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                📰 News Aggregator
-            </h1>
-            <p class="text-gray-400">Stay updated with the latest headlines</p>
-        </div>
-
-        <!-- Category Filters -->
-        <div class="bg-gray-800 rounded-lg shadow-xl p-6 mb-8">
-            <div class="flex flex-wrap gap-3 justify-center">
-                <button onclick="fetchNewsByCategory('general')" class="category-btn px-6 py-3 bg-gray-700 rounded-lg font-semibold hover:bg-blue-600 transition-all" data-category="general">
-                    🌍 General
-                </button>
-                <button onclick="fetchNewsByCategory('technology')" class="category-btn px-6 py-3 bg-gray-700 rounded-lg font-semibold hover:bg-blue-600 transition-all" data-category="technology">
-                    💻 Technology
-                </button>
-                <button onclick="fetchNewsByCategory('business')" class="category-btn px-6 py-3 bg-gray-700 rounded-lg font-semibold hover:bg-blue-600 transition-all" data-category="business">
-                    💼 Business
-                </button>
-                <button onclick="fetchNewsByCategory('sports')" class="category-btn px-6 py-3 bg-gray-700 rounded-lg font-semibold hover:bg-blue-600 transition-all" data-category="sports">
-                    ⚽ Sports
-                </button>
-                <button onclick="fetchNewsByCategory('entertainment')" class="category-btn px-6 py-3 bg-gray-700 rounded-lg font-semibold hover:bg-blue-600 transition-all" data-category="entertainment">
-                    🎬 Entertainment
-                </button>
-                <button onclick="fetchNewsByCategory('health')" class="category-btn px-6 py-3 bg-gray-700 rounded-lg font-semibold hover:bg-blue-600 transition-all" data-category="health">
-                    🏥 Health
-                </button>
-                <button onclick="fetchNewsByCategory('science')" class="category-btn px-6 py-3 bg-gray-700 rounded-lg font-semibold hover:bg-blue-600 transition-all" data-category="science">
-                    🔬 Science
-                </button>
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4 text-center">📰 News Aggregator</h1>
+            
+            <!-- Category Filter -->
+            <div class="max-w-md mx-auto">
+                <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Filter by Category:</label>
+                <select id="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="general">General</option>
+                    <option value="technology">Technology</option>
+                    <option value="sports">Sports</option>
+                    <option value="business">Business</option>
+                    <option value="entertainment">Entertainment</option>
+                    <option value="health">Health</option>
+                    <option value="science">Science</option>
+                </select>
             </div>
-        </div>
+        </header>
 
-        <!-- Loading State -->
-        <div id="loadingState" class="hidden flex flex-col justify-center items-center py-20">
-            <div class="loading mb-4"></div>
-            <p class="text-gray-400 text-lg">Loading news...</p>
+        <!-- Loading Spinner -->
+        <div id="loading" class="hidden flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
         </div>
 
         <!-- Error Message -->
-        <div id="errorMessage" class="hidden bg-red-500 bg-opacity-20 border border-red-500 rounded-lg p-6 mb-8 text-center">
-            <p class="text-red-300 font-semibold text-lg mb-2"></p>
-            <p class="text-red-200 text-sm"></p>
+        <div id="error" class="hidden max-w-2xl mx-auto mb-8">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Error!</strong>
+                <span id="error-message" class="block sm:inline"></span>
+            </div>
         </div>
 
-        <!-- News Count -->
-        <div id="newsCount" class="hidden text-center mb-6">
-            <p class="text-gray-400 text-sm"></p>
-        </div>
-
-        <!-- News Grid -->
-        <div id="newsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        </div>
-
-        <!-- No Results -->
-        <div id="noResults" class="hidden text-center py-20">
-            <p class="text-gray-400 text-xl">📭 No news articles found</p>
-            <p class="text-gray-500 text-sm mt-2">Try selecting a different category</p>
+        <!-- News Cards Container -->
+        <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- News cards will be inserted here -->
         </div>
     </div>
 
     <script>
-        // IMPORTANT: Replace with your own NewsAPI key
-        // Get free key at: https://newsapi.org/register
-        const API_KEY = 'a1aa331752de4a9dac6ee1810658b117'; // Demo key (limited requests)
+        const API_KEY = 'a1aa331752de4a9dac6ee1810658b117'; // Replace with your NewsAPI key
         const API_URL = 'https://newsapi.org/v2/top-headlines';
         
-        let lastSelectedCategory = 'general';
-        let categoryCache = {}; // In-memory cache
+        const categorySelect = document.getElementById('category');
+        const newsContainer = document.getElementById('news-container');
+        const loadingSpinner = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const errorMessage = document.getElementById('error-message');
 
-        // Load last selected category from memory on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            console.log('News Aggregator ready!');
-            // Default to general category
-            fetchNewsByCategory('general');
-        });
+        // State management using variables
+        let currentCategory = 'general';
 
-        // Fetch top headlines using Promises with .then() chains
+        // Initialize app
+        function init() {
+            // Restore last selected category from memory
+            const savedCategory = getSavedCategory();
+            if (savedCategory) {
+                currentCategory = savedCategory;
+                categorySelect.value = savedCategory;
+            }
+
+            // Load initial news using .then() chains
+            fetchTopHeadlines()
+                .then(data => {
+                    displayNews(data.articles);
+                })
+                .catch(err => {
+                    showError(err.message);
+                });
+
+            // Add event listener for category change
+            categorySelect.addEventListener('change', handleCategoryChange);
+        }
+
+        // Fetch top headlines using .then() chains (Promises)
         function fetchTopHeadlines() {
             showLoading();
             hideError();
-            clearNewsGrid();
 
-            fetch(`${API_URL}?country=us&apiKey=${API_KEY}`)
+            return fetch(`${API_URL}?country=us&apiKey=${API_KEY}`)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
+                        if (response.status === 401) {
+                            throw new Error('Invalid API key. Please check your NewsAPI key.');
+                        } else if (response.status === 426) {
+                            throw new Error('API upgrade required. Please use a backend server for NewsAPI requests.');
+                        } else if (response.status === 429) {
+                            throw new Error('API quota exceeded. You have reached your daily limit.');
+                        } else {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
                     }
                     return response.json();
                 })
@@ -133,34 +106,18 @@
                     if (data.status === 'error') {
                         throw new Error(data.message);
                     }
-                    if (data.articles && data.articles.length > 0) {
-                        displayNews(data.articles);
-                        showNewsCount(data.articles.length, data.totalResults);
-                    } else {
-                        showNoResults();
-                    }
+                    return data;
                 })
                 .catch(error => {
                     hideLoading();
-                    handleError(error);
+                    throw error;
                 });
         }
 
-        // Fetch news by category using async/await
+        // Fetch filtered news by category using async/await
         async function fetchNewsByCategory(category) {
-            // Check cache first
-            if (categoryCache[category]) {
-                displayNews(categoryCache[category].articles);
-                showNewsCount(categoryCache[category].articles.length, categoryCache[category].totalResults);
-                updateActiveCategory(category);
-                lastSelectedCategory = category;
-                return;
-            }
-
             showLoading();
             hideError();
-            clearNewsGrid();
-            updateActiveCategory(category);
 
             try {
                 const response = await fetch(`${API_URL}?country=us&category=${category}&apiKey=${API_KEY}`);
@@ -168,189 +125,118 @@
                 if (!response.ok) {
                     if (response.status === 401) {
                         throw new Error('Invalid API key. Please check your NewsAPI key.');
+                    } else if (response.status === 426) {
+                        throw new Error('API upgrade required. Please use a backend server for NewsAPI requests.');
                     } else if (response.status === 429) {
-                        throw new Error('API rate limit exceeded. Please try again later.');
+                        throw new Error('API quota exceeded. You have reached your daily limit.');
                     } else {
-                        throw new Error(`Failed to fetch news. Status: ${response.status}`);
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                 }
 
                 const data = await response.json();
+                
+                if (data.status === 'error') {
+                    throw new Error(data.message);
+                }
 
                 hideLoading();
-
-                if (data.status === 'error') {
-                    throw new Error(data.message || 'Failed to fetch news');
-                }
-
-                if (data.articles && data.articles.length > 0) {
-                    // Cache the results
-                    categoryCache[category] = {
-                        articles: data.articles,
-                        totalResults: data.totalResults
-                    };
-                    
-                    displayNews(data.articles);
-                    showNewsCount(data.articles.length, data.totalResults);
-                    lastSelectedCategory = category;
-                } else {
-                    showNoResults();
-                }
-
+                return data;
             } catch (error) {
                 hideLoading();
-                handleError(error);
-                console.error('Error fetching news:', error);
+                throw error;
             }
         }
 
-        // Display news articles
+        // Handle category change
+        async function handleCategoryChange(e) {
+            currentCategory = e.target.value;
+            saveCategory(currentCategory);
+
+            try {
+                const data = await fetchNewsByCategory(currentCategory);
+                displayNews(data.articles);
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Display news cards
         function displayNews(articles) {
-            const grid = document.getElementById('newsGrid');
-            grid.innerHTML = '';
+            newsContainer.innerHTML = '';
+
+            if (!articles || articles.length === 0) {
+                newsContainer.innerHTML = '<p class="col-span-full text-center text-gray-600 text-lg">No news articles found.</p>';
+                return;
+            }
 
             articles.forEach(article => {
-                // Skip articles without essential data
-                if (!article.title || article.title === '[Removed]') return;
-
-                const imageUrl = article.urlToImage || 'https://via.placeholder.com/400x250?text=No+Image';
-                const description = article.description || 'No description available';
-                const source = article.source.name || 'Unknown Source';
-                const publishedDate = new Date(article.publishedAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-
-                const newsCard = document.createElement('div');
-                newsCard.className = 'news-card bg-gray-800 rounded-lg overflow-hidden shadow-lg';
-                newsCard.innerHTML = `
-                    <div class="relative h-48 overflow-hidden">
-                        <img 
-                            src="${imageUrl}" 
-                            alt="${article.title}" 
-                            class="w-full h-full object-cover"
-                            onerror="this.src='https://via.placeholder.com/400x250?text=No+Image'"
-                        >
-                        <div class="absolute top-2 left-2 bg-blue-600 px-3 py-1 rounded-full text-xs font-semibold">
-                            ${source}
-                        </div>
-                    </div>
-                    <div class="p-5">
-                        <div class="flex items-center gap-2 mb-2 text-xs text-gray-400">
-                            <span>📅 ${publishedDate}</span>
-                            ${article.author ? `<span>• ✍️ ${article.author.substring(0, 20)}${article.author.length > 20 ? '...' : ''}</span>` : ''}
-                        </div>
-                        <h3 class="font-bold text-lg mb-2 line-clamp-2 text-white hover:text-blue-400 transition-colors">
-                            ${article.title}
-                        </h3>
-                        <p class="text-gray-400 text-sm mb-4 line-clamp-3">
-                            ${description}
-                        </p>
-                        <a 
-                            href="${article.url}" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg text-sm font-semibold hover:from-blue-600 hover:to-purple-600 transition-all"
-                        >
-                            Read More →
-                        </a>
-                    </div>
-                `;
-
-                grid.appendChild(newsCard);
-            });
-
-            document.getElementById('newsGrid').classList.remove('hidden');
-        }
-
-        // Update active category button
-        function updateActiveCategory(category) {
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.category === category) {
-                    btn.classList.add('active');
-                }
+                const card = createNewsCard(article);
+                newsContainer.appendChild(card);
             });
         }
 
-        // Show news count
-        function showNewsCount(displayed, total) {
-            const countDiv = document.getElementById('newsCount');
-            countDiv.querySelector('p').textContent = `Showing ${displayed} of ${total} articles`;
-            countDiv.classList.remove('hidden');
+        // Create individual news card
+        function createNewsCard(article) {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300';
+
+            const imageUrl = article.urlToImage || 'https://via.placeholder.com/400x200?text=No+Image';
+            const title = article.title || 'No title available';
+            const description = article.description || 'No description available';
+            const url = article.url || '#';
+            const source = article.source.name || 'Unknown source';
+
+            card.innerHTML = `
+                <img src="${imageUrl}" alt="${title}" class="w-full h-48 object-cover" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'">
+                <div class="p-4">
+                    <span class="text-xs font-semibold text-blue-600 uppercase">${source}</span>
+                    <h2 class="text-xl font-bold text-gray-800 mt-2 mb-2 line-clamp-2">${title}</h2>
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-3">${description}</p>
+                    <a href="${url}" target="_blank" rel="noopener noreferrer" class="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+                        Read More →
+                    </a>
+                </div>
+            `;
+
+            return card;
         }
 
-        // Handle errors
-        function handleError(error) {
-            const errorDiv = document.getElementById('errorMessage');
-            const errorMessage = errorDiv.querySelector('p:first-child');
-            const errorDetails = errorDiv.querySelector('p:last-child');
-
-            if (error.message.includes('API key') || error.message.includes('401')) {
-                errorMessage.textContent = '🔑 Invalid API Key';
-                errorDetails.textContent = 'Please get a valid API key from NewsAPI.org and replace it in the code.';
-            } else if (error.message.includes('rate limit') || error.message.includes('429')) {
-                errorMessage.textContent = '⏰ Rate Limit Exceeded';
-                errorDetails.textContent = 'You have exceeded the API request limit. Please try again later or upgrade your API plan.';
-            } else if (error.message.includes('Failed to fetch')) {
-                errorMessage.textContent = '🌐 Network Error';
-                errorDetails.textContent = 'Unable to connect to the news service. Please check your internet connection.';
-            } else {
-                errorMessage.textContent = '❌ Error Loading News';
-                errorDetails.textContent = error.message || 'An unexpected error occurred. Please try again.';
-            }
-
-            errorDiv.classList.remove('hidden');
-        }
-
-        // UI Helper Functions
+        // Show loading spinner
         function showLoading() {
-            document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('newsCount').classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+            newsContainer.innerHTML = '';
         }
 
+        // Hide loading spinner
         function hideLoading() {
-            document.getElementById('loadingState').classList.add('hidden');
+            loadingSpinner.classList.add('hidden');
         }
 
+        // Show error message
         function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.querySelector('p').textContent = message;
+            errorMessage.textContent = message;
             errorDiv.classList.remove('hidden');
+            newsContainer.innerHTML = '';
         }
 
+        // Hide error message
         function hideError() {
-            document.getElementById('errorMessage').classList.add('hidden');
+            errorDiv.classList.add('hidden');
         }
 
-        function clearNewsGrid() {
-            document.getElementById('newsGrid').innerHTML = '';
-            document.getElementById('noResults').classList.add('hidden');
+        // Save category to memory (using a variable instead of sessionStorage)
+        function saveCategory(category) {
+            currentCategory = category;
         }
 
-        function showNoResults() {
-            document.getElementById('noResults').classList.remove('hidden');
-            document.getElementById('newsCount').classList.add('hidden');
+        // Get saved category from memory
+        function getSavedCategory() {
+            return currentCategory;
         }
 
-        // Add line-clamp utility classes
-        const style = document.createElement('style');
-        style.textContent = `
-            .line-clamp-2 {
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-            .line-clamp-3 {
-                display: -webkit-box;
-                -webkit-line-clamp: 3;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-        `;
-        document.head.appendChild(style);
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
